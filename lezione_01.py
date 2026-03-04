@@ -9,12 +9,12 @@
 
 
 class Prodotto:
-    #ATTRIBUTO DI CLASSE ->un attributo specifico uguale per una classe (per tutti gli oggetti)
+    #------------------ATTRIBUTO DI CLASSE ->un attributo specifico uguale per una classe (per tutti gli oggetti)
     aliquota_iva = 0.22 #N.B. se dopo la modifico sotto, sotto quella modificata usa il numero modificato
     #prende quindi l'ultimo valore che vede.
 
     def __init__(self, name: str, price: float, quantity: int, supplier:str):
-        #ATTRIBUTI DI ISTANZA-> più attributi, che cambiano da oggetto a oggetto
+        #------------------------ATTRIBUTI DI ISTANZA-> più attributi, che cambiano da oggetto a oggetto
         self.name = name
         self._price = None #per getter e setter
         self.price = price
@@ -189,28 +189,45 @@ class RigaOrdine:
         return self.prodotto.prezzo_unitario * self.quantità
 
 @dataclass
-class Ordine:
+class Ordine: #il simbolo blu ci avverte che qualcuno ha fatto una sottoclasse
     righe: list[RigaOrdine]
     cliente: ClienteRecord
 
     def totale_netto(self):
-        return sum(r.totale_riga for r in self.righe)
+        return sum(r.totale_riga() for r in self.righe)
     def totale_lordo(self, aliquota_iva):
         return self.totale_netto()* (1+aliquota_iva)
     def numero_righe(self):
         return len(self.righe)
+
+@dataclass
+class OrdineConSconto(Ordine):
+    sconto_percentuale: float
+
+    def totale_scontato(self):
+        return self.totale_lordo()* (1-self.sconto_percentuale)
+    def totale_netto(self):
+        netto_base = super().totale_netto()
+        return netto_base*(1-self.sconto_percentuale)
+
+
 
 cliente1 = ClienteRecord("Mario Rossi", "mariorossi@live.it", "Gold")
 p1 = ProdottoRecord("laptop", 1200.0)
 p2 = ProdottoRecord("Mouse", 20.0)
 
 ordine = Ordine([RigaOrdine(p1,2), RigaOrdine(p2,10)], cliente1)
+ordine_scontato = OrdineConSconto([RigaOrdine(p1,2), RigaOrdine(p2,10)], cliente1, 0.10)
 
+
+print(ordine)
 print("Numero righe dell'ordine", ordine.numero_righe())
 print("Totale netto: ", ordine.totale_netto())
-print("Totale lordo: ", ordine.totale_lordo())
+print("Totale lordo: ", ordine.totale_lordo(0.22))
 
 print("-------------------------------------------------------------------")
+
+
 
 
 #dato che abbiamo visto i getter e i setter, modifichiamo "self.categoria = categoria" in modo che
