@@ -109,9 +109,19 @@ class Servizio(Prodotto):
     # si introduce il polimorfismo, chiamiamo lo stesso metodo prezzo_finale (per prodotto, servizio e prodottoscontato)
     # ma il contenuto cambia da oggetto a oggetto
 
+class Abbonamento(Prodotto):
 
+    def __init__(self, name: str, prezzo_mensile: float, mesi: int):
+        super().__init__(name = name, price = prezzo_mensile, quantity = 1, supplier= None)
+        self.mesi = mesi
 
+    def prezzo_finale(self):
+        return self.price * self.mesi
 
+MAX_QUANTITA = 1000
+
+def crea_prodotto_standard(nome: str, prezzo: float):
+    return Prodotto(nome, prezzo, 1, None)
 
 
 myproduct1 = Prodotto( name= "Laptop" , price= 1200.0, quantity=12, supplier="ABC" )
@@ -133,14 +143,7 @@ for elemento in my_list:
 
 
 #ESERCIZIO creo una classe abbonamento che abbia nome prezzomensile mesi e abbia un prezzo_finale
-class Abbonamento(Prodotto):
 
-    def __init__(self, name: str, prezzo_mensile: float, mesi: int):
-        super().__init__(name = name, price = prezzo_mensile, quantity = 1, supplier= None)
-        self.mesi = mesi
-
-    def prezzo_finale(self):
-        return self.price * self.mesi
 
 abb = Abbonamento("Software gestionale", 30.0, 24 )
 
@@ -166,130 +169,3 @@ class HaPrezzoFinale(Protocol): #significa: creo una classe HaPrezzoFinale
         ...
 def calcola_totale(elementi: list[HaPrezzoFinale]) -> float: #significa che gli "elementi" hanno prezzo_finale
     return sum(e.prezzo_finale() for e in elementi)
-
-print("--------------------------------------------------------------")
-#Altro DECORATORE
-from dataclasses import dataclass
-@dataclass
-class ProdottoRecord:
-    name: str
-    prezzo_unitario: float
-@dataclass
-class ClienteRecord:
-    name: str
-    email: str
-    categoria: str
-
-@dataclass
-class RigaOrdine:
-    prodotto: ProdottoRecord
-    quantità: int
-
-    def totale_riga(self):
-        return self.prodotto.prezzo_unitario * self.quantità
-
-@dataclass
-class Ordine: #il simbolo blu ci avverte che qualcuno ha fatto una sottoclasse
-    righe: list[RigaOrdine]
-    cliente: ClienteRecord
-
-    def totale_netto(self):
-        return sum(r.totale_riga() for r in self.righe)
-    def totale_lordo(self, aliquota_iva):
-        return self.totale_netto()* (1+aliquota_iva)
-    def numero_righe(self):
-        return len(self.righe)
-
-@dataclass
-class OrdineConSconto(Ordine):
-    sconto_percentuale: float
-
-    def totale_scontato(self):
-        return self.totale_lordo()* (1-self.sconto_percentuale)
-    def totale_netto(self):
-        netto_base = super().totale_netto()
-        return netto_base*(1-self.sconto_percentuale)
-
-
-
-cliente1 = ClienteRecord("Mario Rossi", "mariorossi@live.it", "Gold")
-p1 = ProdottoRecord("laptop", 1200.0)
-p2 = ProdottoRecord("Mouse", 20.0)
-
-ordine = Ordine([RigaOrdine(p1,2), RigaOrdine(p2,10)], cliente1)
-ordine_scontato = OrdineConSconto([RigaOrdine(p1,2), RigaOrdine(p2,10)], cliente1, 0.10)
-
-
-print(ordine)
-print("Numero righe dell'ordine", ordine.numero_righe())
-print("Totale netto: ", ordine.totale_netto())
-print("Totale lordo: ", ordine.totale_lordo(0.22))
-
-print("-------------------------------------------------------------------")
-
-
-
-
-#dato che abbiamo visto i getter e i setter, modifichiamo "self.categoria = categoria" in modo che
-#sia protetta ( si possa cambiare solo in "Gold" "Silver" "Bronze")
-class Cliente:
-    def __init__(self, nome , mail , categoria):
-        self.nome = nome
-        self.mail = mail
-        self._categoria = None
-        self.categoria = categoria
-
-    #getter
-    @property
-    def categoria(self):
-        return self._categoria
-    #setter
-    @categoria.setter
-    def categoria(self,new_categoria):
-        categorie_valide = {"Gold", "Silver", "Bronze"}
-        if new_categoria not in categorie_valide:
-            raise ValueError("Attenzione, categoria non valida, si può scegliere solo: Gold, Silver, Bronze")
-        self._categoria = new_categoria
-
-
-    def descrizione(self):
-        return f"Cliente: {self.nome} ({self.categoria}) - {self.mail}"
-
-#stampiamo e creiamo un normale cliente
-c1 = Cliente(nome="Mario Bianchi", mail="mario.bianchi@polito.it", categoria="Gold")
-print(c1.descrizione())
-#qui verifico che il controllo getter/setter funzioni; metto una categoria che non esiste "Platinum"
-
-#c2 = Cliente("Luigi","luigi01@live.it", "Platinum") #è commentato perchè visualizza un errore.
-#print(c2.descrizione())
-
-#CHIAMATA METODO DI ISTANZA
-print(f"Il valore netto del ''myproduct1'' è {myproduct1.valore_netto()}") # ogetto specifico.metodo()
-
-#CHIAMATA METODO DI CLASSE
-p3 = Prodotto.costruttore_con_quantita_uno("Auricolari",200.0, "ABC") #nome_classe.metodo(...)
-
-
-#CHIAMATA METODO DI STATICO
-print(f"Prezzo scontato di myproduct1 -> {Prodotto.applica_sconto(myproduct1.price,0.15)}") #nome_classe.metodo()
-
-
-
-
-print(f" print(myproduct1) dopo aver settato il dunder '__str__' sotto la classe -->  {myproduct1}")
-
-myproduct1_copy = Prodotto( name= "Laptop" , price= 1200.0, quantity=12, supplier="ABC" )
-
-print(f"Utilizzando il dunder __eq__ verifico che myproduct1 sia uguale alla sua copia myproduct1copy si fa semplicemente "
-      f"con '==':  {myproduct1 == myproduct1_copy}")
-print(f"adesso ne confronto 2 diversi: {myproduct1 == myproduct2}")
-
-
-print("fine")
-
-
-
-
-
-
-
